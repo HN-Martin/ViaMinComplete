@@ -1,0 +1,212 @@
+﻿Projet : Le problème de Via Minimization
+
+------------------------------------------------------------------BONDU Martin
+------------------------------------------------------------------
+
+
+Contenu du projet : 
+
+-fichiers fournis
+
+entree_sortie.c
+entree_sortie.h
+SVGwriter.c
+SVGwrite r.h
+Fichiers de Netlists fournis (dans Instance_Netlist)
+
+-fichiers contenant les fonctions
+
+graphe.c
+graphe.h
+netlist.c
+netlist.h
+
+-fichiers main
+
+CopieNetlist.c
+ (permet de copier un ficher .net a l'identique apres avoir créé la structure netlist)
+ (utilisation : ./nomprogramme fichier.net)
+
+VisuNetlist.c
+ (permet de visualiser grâce à SVG la Netlist)
+ (utilisation : ./nomprogramme fichier.net)
+
+Sauv_Intersec_Naif.c
+ (permet de sauvegarder les intersections dans un fichier .int)
+ (utilisation : ./nomprogramme fichier.net)
+
+Sauv_Intersec_Balayage.c
+ (permet de sauvegarder les intersections dans un fichier balay.int)
+ (utilisation : ./nomprogramme fichier.net)
+
+Sauv_Intersec_AVL.c
+ (permet de sauvegarder les intersections dans un fichier balayAVL.int)
+ (utilisation : ./nomprogramme fichier.net)
+
+AfficheGraphe.c 
+ (permet d'afficher les sommets et arêtes du graphe dans la console avec des printf)
+ (utilisation : ./nomprogramme fichier.net fichier.net.int)
+
+VisuGraphe.c 
+ (permet de visualiser le dessin du graphe avec SVG) // Q5.2
+ (utilisation : ./nomprogramme fichier.net fichier.net.int)
+
+VisuViaTableauS.c 
+ (permet de visualiser grâce à SVG la répartition des segments face A / face B et les Vias apres le remplissage du tableau S)  // Q6
+ (utilisation : ./nomprogramme fichier.net fichier.net.int)
+
+AfficheCycleImpair.c
+ (permet d'afficher si un sommet du graphe est a 0-1-2 dans la console avec des printf suite a la methode des cycles impairs)  
+ (utilisation : ./nomprogramme fichier.net fichier.net.int)
+
+VisuViaCycleImpair.c
+ (permet de visualiser grâce à SVG la répartition des segments face A / face B et les Vias avec la methode des cycles impairs)  // Q7
+ (utilisation : ./nomprogramme fichier.net fichier.net.int)
+
+
+-Makefile
+
+test.net
+c5.net
+ibm
+
+
+
+===========================================================================================================================
+PARTIE A
+---------------------------------------------------------------------------------------------------------------------------
+Q3.3 Donner la complexité (pire-cas) en fonction de n de cette méthode lorsque la structure T est
+implémentée par une liste chaînée triée. On note α une borne maximale sur nombre de segments
+horizontaux traversés par la droite quelque soit l’abscisse du plan, c’est-à-dire α ≥ kx pour tout x
+dans l’échéancier E. Si l’on suppose que cette donnée α est un paramètre de l’algorithme indépendant
+de n, donner une autre mesure de la complexité de l’algorithme.
+---------------------------------------------------------------------------------------------------------------------------
+
+
+pour chaque segment, on a soit : 
+- 2 extremités pour un seg horizontal (Gauche et Droite)
+- 1 extremité pour un seg vertical
+
+Si on pose n = nb_segments_total
+L'echeancier comporte donc environ 1.5*n extrémités (en supposant autant de segments horizontaux que de segments verticaux)
+
+le tri de l'echeancier se fait par tri rapide sur 1.5*n elements en o(n*log(n))
+
+pour chaque extremité, 
+
+-si c'est une extremité gauche : 
+on fait un ajout en place dans la structure de Liste chainée ordonnée T :
+Par hypothese, le nb kx d'elements de T est inférieur à α donc l'insertion se fait en o(α) 
+-si c'est une extremité droite  : 
+on fait une suppression en place dans la structure de Liste chainée ordonnée T :
+Par hypothese, le nb kx d'elements de T est inférieur à α donc l'insertion se fait en o(α) 
+-si c'est une extremité verticale : 
+    On va chercher le premier_segment_apres (en o(α) comme précédemment) 
+    puis on cherche les suivants ( en o(1) )
+
+
+L'algorithme de balayage est donc en o((1.5*n*α)+n*log(n)) donc en o(n*(α+log(n))) 
+Dans le cas ou α est une constante indépendante de n, on retrouve donc un algorithme en o(n+n*log(n)) donc o(n*log(n))
+
+Dans le cas ou chaque segment s'intersecte avec tous les autres segments, on a alors α qui tend vers n
+On retrouve la complexité o(n²) de l'introduction de l'exercice 3 de l'énoncé.
+
+
+---------------------------------------------------------------------------------------------------------------------------
+Q 4.4 Reprenez le cadre de la question 3.3 pour donner les complexités des méthodes de manipulation
+de l’AVL et de la méthode par balayage.
+---------------------------------------------------------------------------------------------------------------------------
+
+
+le tri de l'echeancier est toujours en o(n*log(n)) mais le parcourt de la structure T (AVL) lors de l'insertion et de la suppression se fait maintenant en o(log(α)) 
+comme une recherche dans un arbre binaire de recherche.
+
+par contre la fonction AuDessus :
+- est alors en o(log(α)) pour chaque nouveau noeud si on repart de la racine pour chaque recherche d'intersection avec une extremité verticale
+- dans le cas d'une structure AVL avec pere, on peut faire un parcourt unique de l'arbre AVL pour chaque extremite verticale et on retrouve un parcourt en o(α) comme pour la liste chainée.
+
+
+===========================================================================================================================
+PARTIE B
+---------------------------------------------------------------------------------------------------------------------------
+Q 7.5 Donner la complexité de cette méthode recherche cycle impair.
+---------------------------------------------------------------------------------------------------------------------------
+
+- on utilise la fonction detecte_cycle_impair jusqu'a ce qu'on ne trouve plus de cycle.
+- la fonction de detection parcourt le tableau de sommet jusqu'a trouver un cycle.
+- a chaque fois que l'on trouve un cycle, on ajoute un via dans le cycle et on recommence
+
+cette methode parcourt le tableau de sommet autant de fois qu'il y a de vias necessaires.
+n = nb de sommets
+v = nb de vias.
+la complexité pire cas est donc o(n*v)
+
+sachant que l'on ne peut avoir de vias que sur les points, on a v < n 
+
+donc la complexité pire cas est o(n²).
+
+En pratique, on detecte un cycle s'il y en a un avant de parcourir tout le tableau. 
+donc on n'atteint pas n² .
+
+Sauvegarde d'intersections 
+
+#Naif    Balayage
+1   0.002391 0.000666   alea
+2   0.003294 0.000486
+3   0.016579 0.002874 
+4   0.033230 0.004156 
+5   0.493049 0.026948 
+6   0.878276 0.045709 
+7   2.112321 0.085282 
+8   4.320544 0.186572 
+9   0.000012 0.000019   test
+10  0.027453 0.004595   c1
+11  0.033670 0.005209  
+12  0.045021 0.005306 
+13  0.046810 0.007850
+14  1.011621 0.010456     ibm
+15 34.388856 0.082724 
+
+Repartition des vias
+
+Temps de placement des Vias (2 methodes) | nombre de vias (2 methodes)  | nombre de sommets | fichier
+
+0.000010   0.000014       2      0        15     test.net
+0.000049   0.032603     423    334      2254     c1.net
+0.000068   0.072340     653    510      3501     c4.net
+0.000057   0.100383     782    648      3834     c5.net
+0.000077   0.101386     782    659      3834     c5_2.net
+0.000058   0.002980     130     58       448     alea0030_030_10_088.net
+0.000066   0.002952     124     60       512     alea0030_030_90_007.net
+0.000046   0.010669     429    297      1436     alea0100_050_10_097.net
+0.003740   7.912176    36590   7423              ibm5000
+0.007828 133.842282    75700  27752   232810     ibm10000
+
+
+On remarque que :
+la methode 1 (ex6) est plus rapide mais crée plus de vias 
+la methode 2 (ex7) est plus lente mais crée moins de vias 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
